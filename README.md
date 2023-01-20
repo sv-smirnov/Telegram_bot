@@ -10,13 +10,13 @@
 
 ***
 ### Особенности проекта:
-  ●	Java 11
-  ●	Spring boot
-  ●	Liquibase/flyway
-  ●	Swagger
-  ●	Docker
-  ●	H2/postgres
-  ●	JdbcTemplate/Hibernate
-  ●	Maven
+ + Java 11
+ + Spring boot
+ + Liquibase/flyway
+ + Swagger
+ + Docker
+ + H2/postgres
+ + JdbcTemplate/Hibernate
+ + Maven
 
 ***
