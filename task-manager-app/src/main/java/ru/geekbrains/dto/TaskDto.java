@@ -3,7 +3,7 @@ package ru.geekbrains.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @AllArgsConstructor
 @Data
@@ -12,6 +12,7 @@ public class TaskDto {
     private String userName;
     private String lastName;
     private String task;
-    private LocalDateTime time;
+    private String time;
+    private LocalDate date;
 
 }

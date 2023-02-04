@@ -6,6 +6,5 @@ import ru.geekbrains.entity.Task;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    Task findByNumber(String number);
 
 }

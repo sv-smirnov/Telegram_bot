@@ -15,19 +15,16 @@ public class TaskService {
     private final TaskRepository taskRepository;
 
     public void createNewTask(TaskDto taskDto) {
-        User user = checkUser(taskDto);
-        Task task = new Task(taskDto.getTask(), user, taskDto.getTime());
-
+        User user = createUser(taskDto);
+        Task task = new Task(taskDto.getTask(), user, taskDto.getTime(), taskDto.getDate());
         taskRepository.save(task);
     }
 
-    private User checkUser(TaskDto taskDto) {
+    private User createUser(TaskDto taskDto) {
         User user = new User(taskDto.getUserId(), taskDto.getUserName(), taskDto.getLastName());
-        if (userRepository.findById(taskDto.getUserId()).isEmpty()) {
+        if (!userRepository.existsById(taskDto.getUserId())) {
             userRepository.save(user);
-            System.out.println("User successfully added");
         }
-        System.out.println("User successfully checked");
         return user;
     }
 
