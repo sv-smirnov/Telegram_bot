@@ -1,12 +1,16 @@
 package ru.geekbrains.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.geekbrains.config.BotConfig;
 import ru.geekbrains.dto.TaskDto;
@@ -15,13 +19,28 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Component
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class TimeTaskBot extends TelegramLongPollingBot {
+
+    //TODO logging
     private final BotConfig config;
     private final RestTemplate restTemplate = new RestTemplate();
+    public TimeTaskBot(BotConfig config) {
+        this.config = config;
+        List<BotCommand> menuCommands = new ArrayList<>();
+        menuCommands.add(new BotCommand("/start", "старт бота"));
+        menuCommands.add(new BotCommand("/help", "список комманд"));
+        try {
+            this.execute(new SetMyCommands(menuCommands, new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public String getBotUsername() {
@@ -37,62 +56,56 @@ public class TimeTaskBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
-            switch (messageText) {
-                case ("/start"):
-                    startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
-                case ("/help"):
-                    helpCommandReceived(chatId);
-                    break;
-                case ("/task"):
-                    String answer = "Укажите выполненную работу в формате: /task ЧЧ:MM ЗАДАНИЕ";
-                    sendMessage(chatId, answer);
-                    break;
-                case ("/date"):
-                    String answer2 = "Укажите выполненную работу в формате: /date ГГГГ-ММ-ДД ЧЧ:MM ЗАДАНИЕ";
-                    sendMessage(chatId, answer2);
-                    break;
-                default:
-                    if ((messageText.startsWith("/task ")) && (messageText.substring(6, 11).matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
-                        String task = messageText.substring(12);
-                        String time = messageText.substring(6, 11);
-                        LocalDate date = getMessageDateTime(update.getMessage());
-                        String userName = update.getMessage().getFrom().getFirstName();
-                        String lastName = update.getMessage().getFrom().getLastName();
-                        String nick = update.getMessage().getFrom().getUserName();
-                        Long userId = update.getMessage().getFrom().getId();
-                        sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
-                        TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
-                        restTemplate.postForObject("http://localhost:8082/", taskDto, TaskDto.class);
-                        break;
-                    }
-                    if ((messageText.startsWith("/date ")) && (messageText.substring(6, 16).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$")) && (messageText.substring(17, 22).matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
-                        String task = messageText.substring(23);
-                        String time = messageText.substring(17, 22);
-                        LocalDate date = LocalDate.parse(messageText.substring(6, 16));
-                        String userName = update.getMessage().getFrom().getFirstName();
-                        String lastName = update.getMessage().getFrom().getLastName();
-                        String nick = update.getMessage().getFrom().getUserName();
-                        Long userId = update.getMessage().getFrom().getId();
-                        sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
-                        TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
-                        restTemplate.postForObject("http://localhost:8082/", taskDto, TaskDto.class);
-                        break;
-                    }
-                    sendMessage(chatId, "Данная команда не поддерживается. Отправьте /help для вывода списка команд");
-                    break;
+
+            Long chatId = update.getMessage().getChatId();
+            String userName = update.getMessage().getFrom().getFirstName();
+            String lastName = update.getMessage().getFrom().getLastName();
+            String nick = update.getMessage().getFrom().getUserName();
+            Long userId = update.getMessage().getFrom().getId();
+
+            if (messageText.equals("/start")){
+                startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+            } else if (messageText.equals("/help")){
+                helpCommandReceived(chatId);
+            } else if ((messageText.startsWith("/task ")) && (messageText.substring(6, 11).matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
+                String task = messageText.substring(12);
+                String time = messageText.substring(6, 11);
+                LocalDate date = getMessageDateTime(update.getMessage());
+                sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
+                TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
+                restTemplate.postForObject("http://localhost:8082/", taskDto, TaskDto.class);
+
+            } else if ((messageText.startsWith("/date ")) && (messageText.substring(6, 16).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$")) && (messageText.substring(17, 22).matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
+                String task = messageText.substring(23);
+                String time = messageText.substring(17, 22);
+                LocalDate date = LocalDate.parse(messageText.substring(6, 16));
+                sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
+                TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
+                restTemplate.postForObject("http://localhost:8082/", taskDto, TaskDto.class);
+            } else if ((messageText.startsWith("/history ")) && (messageText.substring(9, 19).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$"))) {
+                LocalDate date = LocalDate.parse(messageText.substring(9, 19));
+                sendMessage(chatId, userName + " " + lastName + " " + " запросил(а) историю работы от " + date);
+                ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:8082/history?date={date}", String.class, date);
+                String history = response.getBody();
+                sendMessage(chatId, "История за " + date + ": " + history);
+               //TODO /history_between
+            } else {
+                sendMessage(chatId, "Данная команда не поддерживается либо была не корректно введена. Отправьте /help для вывода списка команд");
             }
 
         }
 
     }
 
+
+
     private void helpCommandReceived(long chatId) {
         String answer = "Вы можете воспользоваться командой из списка для работы с ботом: \n" +
-                "<b>/help </b>- выдаст список поддерживаемых команд \n" +
-                "<b>/task </b> - отчет за сегоднешний день \n" +
-                "<b>/date </b> - отчет за прошедший день \n";
+                "<b>/help </b>- выдаст список поддерживаемых команд; \n" +
+                "<b>/task HH:MM TASK_DESCRIPTION</b> - Укажите выполненную работу в формате: /task ЧЧ:MM ЗАДАНИЕ \n" +
+                "<b>/date YYYY:MM:DD HH:MM TASK_DESCRIPTION</b> - Укажите выполненную работу в формате: /date ГГГГ-ММ-ДД ЧЧ:MM ЗАДАНИЕ \n" +
+                "<b>/history YYYY:MM:DD</b> - Просмотреть свою историю заданий за определенную дату в формате: /history ГГГГ-ММ-ДД \n" +
+                "<b>/history_btw YYYY:MM:DD YYYY:MM:DD</b> - Просмотреть свою историю заданий за диапазон дат в формате: /history_btw ГГГГ-ММ-ДД ГГГГ-ММ-ДД\n";
         sendMessage(chatId, answer);
     }
 

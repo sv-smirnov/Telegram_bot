@@ -75,4 +75,11 @@ public class Task {
         return id != null && id.equals(other.getId());
     }
 
+    @Override
+    public String toString() {
+        return "Задача: " + description + ' ' +
+                ", пользователь: " + user +
+                ", затрачено времени: " + spendTime + ' ' +
+                ", дата: " + startedAt;
+    }
 }

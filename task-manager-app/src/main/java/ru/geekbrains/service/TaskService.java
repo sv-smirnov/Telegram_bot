@@ -8,6 +8,9 @@ import ru.geekbrains.entity.User;
 import ru.geekbrains.repository.TaskRepository;
 import ru.geekbrains.repository.UserRepository;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TaskService {
@@ -27,6 +30,14 @@ public class TaskService {
         }
         return user;
     }
+
+    public List<Task> history(LocalDate date) {
+        List<Task> history = taskRepository.history(date);
+        System.out.println(history);
+        return history;
+    }
+
+    //TODO historyBetween
 
 
 }
