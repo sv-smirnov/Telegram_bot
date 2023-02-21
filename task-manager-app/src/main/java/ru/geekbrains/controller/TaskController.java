@@ -21,11 +21,18 @@ public class TaskController {
     TaskService taskService;
 
     @GetMapping("/history")
-    public String historyForDate(@Param("date") String date) {
-        System.out.println(date);
-       return taskService.history(LocalDate.parse(date)).toString();
+    public String historyForDate(@Param("date") String date,
+                                 @Param("userId") Long userId) {
+       return taskService.history(LocalDate.parse(date), userId).toString();
 
     }
+    @GetMapping("/team_activity")
+    public String teamActivityForDate(@Param("date") String date) {
+        System.out.println(date);
+        return taskService.teamActivityForDate(LocalDate.parse(date)).toString();
+
+    }
+
     //TODO historyBetween
 
     @PostMapping("/")

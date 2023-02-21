@@ -31,13 +31,16 @@ public class TaskService {
         return user;
     }
 
-    public List<Task> history(LocalDate date) {
-        List<Task> history = taskRepository.history(date);
+    public List<Task> history(LocalDate date, Long userId) {
+        List<Task> history = taskRepository.history(date, userId);
         System.out.println(history);
         return history;
     }
 
     //TODO historyBetween
 
-
+    public List<Task> teamActivityForDate(LocalDate date) {
+        List<Task> teamActivity = taskRepository.teamActivityForDate(date);
+        return teamActivity;
+    }
 }
