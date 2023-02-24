@@ -33,6 +33,13 @@ public class TaskController {
 
     }
 
+    @GetMapping("/users_list")
+    public List usersList() {
+
+        return taskService.getUsersChatIds();
+
+    }
+
     //TODO historyBetween
 
     @PostMapping("/")
