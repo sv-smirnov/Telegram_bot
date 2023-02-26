@@ -26,6 +26,7 @@
     <modules>
         <module>task-bot-app</module>
         <module>task-manager-app</module>
+        <module>task-notifier-app</module>
     </modules>
 
 </project>

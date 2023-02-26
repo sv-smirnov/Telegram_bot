@@ -30,6 +30,8 @@ public class TimeTaskBot extends TelegramLongPollingBot {
     //TODO logging
     private final BotConfig config;
     private final RestTemplate restTemplate = new RestTemplate();
+
+
     public TimeTaskBot(BotConfig config) {
         this.config = config;
         List<BotCommand> menuCommands = new ArrayList<>();
@@ -145,6 +147,17 @@ public class TimeTaskBot extends TelegramLongPollingBot {
         ResponseEntity<String> response = restTemplate.getForEntity(TASK_MANAGER_URL + "team_activity?date={date}", String.class, date);
         String teamActivity = response.getBody();
         sendMessage(chatId, "Выполненные командой задачи за " + date + ": " + teamActivity);
+    }
+
+    public void sendAddTaskReminder(){
+        ResponseEntity<List> response = restTemplate.getForEntity(TASK_MANAGER_URL + "users_list", List.class);
+        List users = response.getBody();
+        System.out.println(users);
+        for (int i = 0; i < users.size(); i++) {
+            System.out.println(users.get(i));
+            sendMessage((Integer) users.get(i), "Не забудьте внести данные о выполненных задачах за сегодня!");
+        }
+
     }
 
 }

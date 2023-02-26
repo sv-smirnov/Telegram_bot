@@ -41,6 +41,13 @@ public class TaskService {
 
     public List<Task> teamActivityForDate(LocalDate date) {
         List<Task> teamActivity = taskRepository.teamActivityForDate(date);
+        System.out.println(teamActivity);
         return teamActivity;
+    }
+
+    public List<Long> getUsersChatIds() {
+        List<Long> usersChatId = userRepository.getUsersChatIds();
+        System.out.println(usersChatId);
+        return usersChatId;
     }
 }
