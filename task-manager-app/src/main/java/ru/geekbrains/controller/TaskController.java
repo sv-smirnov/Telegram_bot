@@ -26,6 +26,13 @@ public class TaskController {
        return taskService.history(LocalDate.parse(date), userId).toString();
 
     }
+    @GetMapping("/history_btw")
+    public String historyForPeriod(@Param("startDate") String startDate,
+                                   @Param("endDate") String endDate,
+                                 @Param("userId") Long userId) {
+        return taskService.historyBetween(LocalDate.parse(startDate), LocalDate.parse(endDate), userId).toString();
+
+    }
     @GetMapping("/team_activity")
     public String teamActivityForDate(@Param("date") String date) {
         System.out.println(date);
@@ -40,7 +47,6 @@ public class TaskController {
 
     }
 
-    //TODO historyBetween
 
     @PostMapping("/")
     public void addNewTask(@RequestBody TaskDto taskDto){

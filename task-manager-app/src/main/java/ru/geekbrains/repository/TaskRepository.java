@@ -12,7 +12,9 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("select t from Task t where t.startedAt = :date and t.user.id = :user_id")
     List<Task> history(LocalDate date, Long user_id);
-    //TODO historyBetween
+
+    @Query("select t from Task t where t.startedAt between :startDate and :endDate and t.user.id = :user_id")
+    List<Task> historyBetween(LocalDate startDate, LocalDate endDate, Long user_id);
 
     @Query("select t from Task t" +
             " where t.startedAt = :date group by t.id, t.user.id order by t.user.id")
