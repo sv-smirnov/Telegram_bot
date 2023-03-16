@@ -1,6 +1,7 @@
 package ru.geekbrains.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -24,16 +25,17 @@ import java.util.List;
 
 
 @Component
+@Slf4j
 //@RequiredArgsConstructor
 public class TimeTaskBot extends TelegramLongPollingBot {
-    private static final String TASK_MANAGER_URL = "http://localhost:8082/";
-    //TODO logging
+
     private final BotConfig config;
     private final RestTemplate restTemplate = new RestTemplate();
-
+    private final String TASK_MANAGER_URL;
 
     public TimeTaskBot(BotConfig config) {
         this.config = config;
+        this.TASK_MANAGER_URL = config.getTaskManagerUrl();
         List<BotCommand> menuCommands = new ArrayList<>();
         menuCommands.add(new BotCommand("/start", "старт бота"));
         menuCommands.add(new BotCommand("/help", "список комманд"));
@@ -42,6 +44,7 @@ public class TimeTaskBot extends TelegramLongPollingBot {
             this.execute(new SetMyCommands(menuCommands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
             e.printStackTrace();
+            log.error("Error occurred" + e.getMessage());
         }
     }
 
@@ -75,8 +78,10 @@ public class TimeTaskBot extends TelegramLongPollingBot {
                 String time = messageText.substring(6, 11);
                 LocalDate date = getMessageDateTime(update.getMessage());
                 sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
+
                 TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
                 restTemplate.postForObject(TASK_MANAGER_URL, taskDto, TaskDto.class);
+                log.info(userName + " " + lastName + " " + "added new task");
 
             } else if ((messageText.startsWith("/date ")) && (messageText.substring(6, 16).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$")) && (messageText.substring(17, 22).matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
                 String task = messageText.substring(23);
@@ -85,20 +90,34 @@ public class TimeTaskBot extends TelegramLongPollingBot {
                 sendMessage(chatId, userName + " " + lastName + " " + " : " + date + " : " + task + " : " + time);
                 TaskDto taskDto = new TaskDto(userId, userName, lastName, task, time, date);
                 restTemplate.postForObject(TASK_MANAGER_URL, taskDto, TaskDto.class);
+                log.info(userName + " " + lastName + " " + "added new task with date");
             } else if ((messageText.startsWith("/history ")) && (messageText.substring(9, 19).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$"))) {
                 LocalDate date = LocalDate.parse(messageText.substring(9, 19));
                 sendMessage(chatId, userName + " " + lastName + " " + " запросил(а) историю работы от " + date);
                 ResponseEntity<String> response = restTemplate.getForEntity(TASK_MANAGER_URL + "history?date={date}&userId={userId}", String.class, date, userId);
                 String history = response.getBody();
                 sendMessage(chatId, "История за " + date + ": " + history);
-                //TODO /history_between
-            }   else if (messageText.equals("/team_activity")){
+                log.info(userName + " " + lastName + " " + "requested history for date" + date);
+            } else if ((messageText.startsWith("/history_btw ")) &&
+                    (messageText.substring(13, 23).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$")) &&
+                    (messageText.substring(24, 34).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$"))) {
+                LocalDate startDate = LocalDate.parse(messageText.substring(13, 23));
+                LocalDate endDate = LocalDate.parse(messageText.substring(24, 34));
+                sendMessage(chatId, userName + " " + lastName + " " + " запросил(а) историю работы от " + startDate + " - " + endDate);
+                ResponseEntity<String> response = restTemplate.getForEntity(TASK_MANAGER_URL + "history_btw?startDate={startDate}&endDate={endDate}&userId={userId}",
+                        String.class, startDate, endDate, userId);
+                String history = response.getBody();
+                sendMessage(chatId, "История за " + startDate + " - " + endDate + ": " + history);
+                log.info(userName + " " + lastName + " " + "requested history for period" + startDate + " - " + endDate);
+            } else if (messageText.equals("/team_activity")){
                 LocalDate date = getMessageDateTime(update.getMessage());
                 getTeamActivity(chatId, date);
+                log.info(userName + " " + lastName + " " + "requested team activity for " + date);
 
             } else if ((messageText.startsWith("/team_activity ")) && (messageText.substring(15, 25).matches("^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$"))) {
                 LocalDate date = LocalDate.parse(messageText.substring(15, 25));
                 getTeamActivity(chatId, date);
+                log.info(userName + " " + lastName + " " + "requested team activity for " + date);
             } else {
                 sendMessage(chatId, "Данная команда не поддерживается либо была не корректно введена. Отправьте /help для вывода списка команд");
             }
@@ -135,6 +154,7 @@ public class TimeTaskBot extends TelegramLongPollingBot {
             execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
+            log.error("Error occurred" + e.getMessage());
         }
     }
 
